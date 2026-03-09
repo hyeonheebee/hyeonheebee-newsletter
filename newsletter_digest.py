@@ -67,6 +67,8 @@ NEWSLETTERS = {
 
 OBSIDIAN_VAULT = Path("/Users/shimhyeonhee/Documents/Obsidian Vault")
 OUTPUT_DIR     = Path.home() / "newsletter-digest" / "output"
+REPO_DIR       = Path.home() / "newsletter-digest"
+PAGES_URL      = "https://hyeonheebee.github.io/hyeonheebee-newsletter"
 
 # ──────────────────────────────────────────────
 #  유틸리티
@@ -935,11 +937,49 @@ def main():
     md_path.write_text(generate_obsidian_md(results, args.days), encoding="utf-8")
     print(f"📝 Obsidian → {md_path}")
 
+    deploy_to_github(html_path, today)
+
     if not args.no_open:
         subprocess.run(["open", str(html_path)])
         print("\n✨ 완료! 브라우저에서 HTML이 열렸습니다.")
     else:
         print("\n✨ 완료!")
+
+
+# ──────────────────────────────────────────────
+#  GitHub Pages 배포
+# ──────────────────────────────────────────────
+def deploy_to_github(html_path: Path, today: str):
+    """index.html 업데이트 → git commit → push → URL 출력"""
+    print("\n🚀 GitHub Pages 배포 중...")
+
+    # index.html 업데이트
+    index_path = REPO_DIR / "index.html"
+    try:
+        index_html = index_path.read_text(encoding="utf-8")
+        new_entry = f'    <li><a href="output/{html_path.name}">{today} 다이제스트</a><span class="date">최신</span></li>\n'
+        # 기존 "최신" 뱃지 제거
+        index_html = index_html.replace('<span class="date">최신</span>', '')
+        # 첫 번째 <li> 앞에 새 항목 삽입
+        index_html = index_html.replace('  <ul>\n', f'  <ul>\n{new_entry}', 1)
+        index_path.write_text(index_html, encoding="utf-8")
+    except Exception as e:
+        print(f"⚠️  index.html 업데이트 실패 (계속 진행): {e}")
+
+    # git add → commit → push
+    try:
+        subprocess.run(["git", "-C", str(REPO_DIR), "add", str(html_path), str(index_path)], check=True)
+        subprocess.run(
+            ["git", "-C", str(REPO_DIR), "commit", "-m", f"newsletter {today}"],
+            check=True
+        )
+        subprocess.run(["git", "-C", str(REPO_DIR), "push"], check=True)
+        print(f"✅ 배포 완료!")
+        print(f"🔗 {PAGES_URL}/output/{html_path.name}")
+        print(f"📋 전체 목록: {PAGES_URL}/")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ git 오류: {e}")
+        print("수동으로 push 해주세요: cd ~/newsletter-digest && git push")
 
 
 if __name__ == "__main__":
