@@ -6894,8 +6894,7 @@ function clearAllSaved() {
 function formatItem(s) {
   const body = s.quote ? s.quote : `[${s.subject}]`;
   const src  = s.link ? `출처: ${s.nl} (${s.link})` : `출처: ${s.nl}`;
-  return `${body}
-- ${src}`;
+  return `${body}\n- ${src}`;
 }
 
 function copySingle(idx) {
@@ -6916,15 +6915,8 @@ function copyAllSaved() {
     groupMap[s.nl].push(s);
   });
   const text = groups.map(nl =>
-    `${nlEmoji(nl)} ${nl}
-` + groupMap[nl].map(formatItem).join('
-
-')
-  ).join('
-
-──────────
-
-');
+    `${nlEmoji(nl)} ${nl}\n` + groupMap[nl].map(formatItem).join('\n\n')
+  ).join('\n\n──────────\n\n');
   navigator.clipboard.writeText(text).then(() => {
     showToast('클립보드에 복사됐어요! 붙여넣기 하세요 📋');
   }).catch(() => {
