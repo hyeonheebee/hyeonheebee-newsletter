@@ -31,6 +31,15 @@ def ensure_packages():
 
 ensure_packages()
 
+# ── .env 파일 자동 로드 ──
+_env_path = Path(__file__).parent / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
 from bs4 import BeautifulSoup
 import html2text as _html2text
 
